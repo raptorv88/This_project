@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfolio Analysis Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0e1117; color: #fafafa; padding: 20px; }
+    h1 { text-align: center; margin-bottom: 30px; font-size: 2rem; }
+    h2 { margin: 30px 0 15px; font-size: 1.4rem; border-bottom: 1px solid #333; padding-bottom: 8px; }
+    h3 { margin: 15px 0 10px; font-size: 1.1rem; color: #aaa; }
+    .totals { display: flex; gap: 30px; margin: 15px 0; flex-wrap: wrap; }
+    .total-card { background: #1a1d24; border-radius: 8px; padding: 15px 25px; }
+    .total-card .label { color: #888; font-size: 0.85rem; }
+    .total-card .value { font-size: 1.4rem; font-weight: 700; margin-top: 4px; }
+    .total-card .value.green { color: #00d26a; }
+    .total-card .value.blue { color: #4da6ff; }
+    .charts { display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; margin: 20px 0; }
+    .chart-box { background: #1a1d24; border-radius: 8px; padding: 20px; max-width: 450px; width: 100%; }
+    .chart-box canvas { max-height: 350px; }
+    .table-wrap { overflow-x: auto; margin: 15px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th { background: #1a1d24; padding: 10px 12px; text-align: left; white-space: nowrap; position: sticky; top: 0; }
+    td { padding: 8px 12px; border-bottom: 1px solid #222; white-space: nowrap; }
+    tr:hover td { background: #1a1d24; }
+    .positive { color: #00d26a; }
+    .negative { color: #ff4b4b; }
+    .scrollable { max-height: 500px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+
+<h1>&#128202; Portfolio Analysis Dashboard</h1>
+
+<h2>&#128204; Diversification</h2>
+<div class="scrollable table-wrap" id="div-table"></div>
+
+<h3>&#128202; Portfolio Totals</h3>
+<div class="totals" id="totals"></div>
+
+<h2>&#128202; Core / Satellite / Tail Allocation</h2>
+<div class="table-wrap" id="cat-table"></div>
+<div class="charts">
+  <div class="chart-box"><canvas id="catChart"></canvas></div>
+</div>
+
+<h2>&#127981; Sector Allocation</h2>
+<div class="table-wrap" id="sector-table"></div>
+<div class="charts">
+  <div class="chart-box"><canvas id="sectorChart"></canvas></div>
+</div>
+
+<h2>&#128176; Risk Vs Reward (Equity)</h2>
+<div class="scrollable table-wrap" id="risk-table"></div>
+
+<script>
+const DATA = {"diversification": [{"Scrip Name": "Accent Microcell Limited", "Quantity": 1500, "Avg Rate": 284.18, "Closing Price": 327.3, "Invested Amount": 426270, "Current Amount": 490950, "Overall P/L": 64680, "% Change": 15.17, "Actions": "Details", "Weightage": 0.0268185948651149}, {"Scrip Name": "Ajmera Realty & Infra India Lt", "Quantity": 600, "Avg Rate": 999.02, "Closing Price": 1020.1, "Invested Amount": 599413.8, "Current Amount": 612060, "Overall P/L": 12646.2, "% Change": 2.11, "Actions": "Details", "Weightage": 0.03343433989844633}, {"Scrip Name": "Aluwind Infra-Tech Ltd", "Quantity": 3000, "Avg Rate": 85.03, "Closing Price": 78, "Invested Amount": 255090, "Current Amount": 234000, "Overall P/L": -21090, "% Change": -8.27, "Actions": "Details", "Weightage": 0.012782465013620303}, {"Scrip Name": "Anant Raj Limited", "Quantity": 1000, "Avg Rate": 532.9, "Closing Price": 576.45, "Invested Amount": 532898.84, "Current Amount": 576450, "Overall P/L": 43551.16, "% Change": 8.17, "Actions": "Details", "Weightage": 0.03148911092778386}, {"Scrip Name": "Apollo Hospitals Enterprise Lt", "Quantity": 125, "Avg Rate": 7680.92, "Closing Price": 7335.5, "Invested Amount": 960115, "Current Amount": 916937.5, "Overall P/L": -43177.5, "% Change": -4.5, "Actions": "Details", "Weightage": 0.05008855347618148}, {"Scrip Name": "Chandan Healthcare Ltd", "Quantity": 800, "Avg Rate": 353.84, "Closing Price": 333.15, "Invested Amount": 283072, "Current Amount": 266520, "Overall P/L": -16552, "% Change": -5.85, "Actions": "Details", "Weightage": 0.014558899895000353}, {"Scrip Name": "Cms Info Systems Limited", "Quantity": 400, "Avg Rate": 560.8, "Closing Price": 354.95, "Invested Amount": 224321.6, "Current Amount": 141980, "Overall P/L": -82341.6, "% Change": -36.71, "Actions": "Details", "Weightage": 0.007755787959973549}, {"Scrip Name": "Efc (I) Limited", "Quantity": 2275, "Avg Rate": 279.95, "Closing Price": 273.8, "Invested Amount": 636887.65, "Current Amount": 622895, "Overall P/L": -13992.65, "% Change": -2.2, "Actions": "Details", "Weightage": 0.03402621172931204}, {"Scrip Name": "Garware Hi-Tech Films Limited", "Quantity": 94, "Avg Rate": 4216.63, "Closing Price": 3929.5, "Invested Amount": 396362.76, "Current Amount": 369373, "Overall P/L": -26989.76, "% Change": -6.81, "Actions": "Details", "Weightage": 0.020177339527675094}, {"Scrip Name": "Godavari Biorefineries Limited", "Quantity": 1750, "Avg Rate": 292.96, "Closing Price": 248.3, "Invested Amount": 512675.04, "Current Amount": 434525, "Overall P/L": -78150.04, "% Change": -15.24, "Actions": "Details", "Weightage": 0.0237363273933477}, {"Scrip Name": "Gravita India Ltd.", "Quantity": 100, "Avg Rate": 1762.8, "Closing Price": 1823.3, "Invested Amount": 176280.16, "Current Amount": 182330, "Overall P/L": 6049.84, "% Change": 3.43, "Actions": "Details", "Weightage": 0.009959943786040126}, {"Scrip Name": "Icici Prudential Bluechip Fund - Growth", "Quantity": 81, "Avg Rate": 61.55, "Closing Price": 116.11, "Invested Amount": 4985.59, "Current Amount": 9404.91, "Overall P/L": 4419.32, "% Change": 88.64, "Actions": "Details", "Weightage": 0.0005137518505608877}, {"Scrip Name": "Idfc First Bank Limited", "Quantity": 7750, "Avg Rate": 69.43, "Closing Price": 80.13, "Invested Amount": 538082.5, "Current Amount": 621007.5, "Overall P/L": 82925, "% Change": 15.41, "Actions": "Details", "Weightage": 0.033923105307460726}, {"Scrip Name": "Irb Infrastructure Developers Limited", "Quantity": 4900, "Avg Rate": 66.72, "Closing Price": 42.91, "Invested Amount": 326928, "Current Amount": 210259, "Overall P/L": -116669, "% Change": -35.69, "Actions": "Details", "Weightage": 0.011485591073926457}, {"Scrip Name": "Jeena Sikho Lifecare Limited", "Quantity": 450, "Avg Rate": 437.82, "Closing Price": 707.9, "Invested Amount": 197019, "Current Amount": 318555, "Overall P/L": 121536, "% Change": 61.69, "Actions": "Details", "Weightage": 0.01740135958296502}, {"Scrip Name": "Jindal Drilling And Industries Limited", "Quantity": 600, "Avg Rate": 713.51, "Closing Price": 555, "Invested Amount": 428109, "Current Amount": 333000, "Overall P/L": -95109, "% Change": -22.22, "Actions": "Details", "Weightage": 0.0181904309809212}, {"Scrip Name": "Jio Financial Services Limited", "Quantity": 1850, "Avg Rate": 245.88, "Closing Price": 306.25, "Invested Amount": 454871.5, "Current Amount": 566562.5, "Overall P/L": 111691, "% Change": 24.55, "Actions": "Details", "Weightage": 0.03094899715503954}, {"Scrip Name": "Jsw Energy Ltd", "Quantity": 2000, "Avg Rate": 610.61, "Closing Price": 488.65, "Invested Amount": 1221219.5, "Current Amount": 977300, "Overall P/L": -243919.5, "% Change": -19.97, "Actions": "Details", "Weightage": 0.053385910503466326}, {"Scrip Name": "Kilburn Engineering Ltd.", "Quantity": 1010, "Avg Rate": 419.69, "Closing Price": 590.75, "Invested Amount": 423886.89, "Current Amount": 596657.5, "Overall P/L": 172770.61, "% Change": 40.76, "Actions": "Details", "Weightage": 0.032592964183180154}, {"Scrip Name": "Kotak Liquid Regular Plan Growth", "Quantity": 1, "Avg Rate": 4273.29, "Closing Price": 5402.58, "Invested Amount": 4273.29, "Current Amount": 5402.58, "Overall P/L": 1129.29, "% Change": 26.43, "Actions": "Details", "Weightage": 0.00029512089672343916}, {"Scrip Name": "Larsen & Toubro Ltd.", "Quantity": 20, "Avg Rate": 3492.38, "Closing Price": 4069.6, "Invested Amount": 69847.6, "Current Amount": 81392, "Overall P/L": 11544.4, "% Change": 16.53, "Actions": "Details", "Weightage": 0.0044461127879854}, {"Scrip Name": "Mcnally Bharat Engineering Company Limited", "Quantity": 1000, "Avg Rate": 4.91, "Closing Price": 3.27, "Invested Amount": 4910, "Current Amount": 3270, "Overall P/L": -1640, "% Change": -33.4, "Actions": "Details", "Weightage": 0.00017862675467751447}, {"Scrip Name": "Modern Insulators Ltd.", "Quantity": 645, "Avg Rate": 168.27, "Closing Price": 168.9, "Invested Amount": 108532.4, "Current Amount": 108940.5, "Overall P/L": 408.1, "% Change": 0.38, "Actions": "Details", "Weightage": 0.005950974913744882}, {"Scrip Name": "Ntpc Green Energy Limited", "Quantity": 1000, "Avg Rate": 149.79, "Closing Price": 94.95, "Invested Amount": 149790, "Current Amount": 94950, "Overall P/L": -54840, "% Change": -36.61, "Actions": "Details", "Weightage": 0.005186730995911315}, {"Scrip Name": "Poddar Housing And Development Limited", "Quantity": 200, "Avg Rate": 173.09, "Closing Price": 49.21, "Invested Amount": 34617.7, "Current Amount": 9842, "Overall P/L": -24775.7, "% Change": -71.57, "Actions": "Details", "Weightage": 0.0005376282934361154}, {"Scrip Name": "Power & Instrumentation (Gujarat) Limited", "Quantity": 3000, "Avg Rate": 167.08, "Closing Price": 151.85, "Invested Amount": 501251.37, "Current Amount": 455550, "Overall P/L": -45701.37, "% Change": -9.12, "Actions": "Details", "Weightage": 0.024884837337413368}, {"Scrip Name": "Prevest Denpro Limited", "Quantity": 1000, "Avg Rate": 530.14, "Closing Price": 440.3, "Invested Amount": 530140, "Current Amount": 440300, "Overall P/L": -89840, "% Change": -16.95, "Actions": "Details", "Weightage": 0.024051792074773586}, {"Scrip Name": "Privi Speciality Chemicals Limited", "Quantity": 203, "Avg Rate": 2092.81, "Closing Price": 3162.05, "Invested Amount": 424841.01, "Current Amount": 641896.15, "Overall P/L": 217055.14, "% Change": 51.09, "Actions": "Details", "Weightage": 0.03506416700748961}, {"Scrip Name": "Raymond Ltd.", "Quantity": 300, "Avg Rate": 2661.52, "Closing Price": 482.75, "Invested Amount": 798457.24, "Current Amount": 144825, "Overall P/L": -653632.24, "% Change": -81.86, "Actions": "Details", "Weightage": 0.007911198699134873}, {"Scrip Name": "Raymond Realty Limited", "Quantity": 300, "Avg Rate": 0, "Closing Price": 503.2, "Invested Amount": 0, "Current Amount": 150960, "Overall P/L": 150960, "% Change": 0, "Actions": "Details", "Weightage": 0.008246328711350944}, {"Scrip Name": "Reliance Industries Ltd.", "Quantity": 80, "Avg Rate": 1398.98, "Closing Price": 1567.5, "Invested Amount": 111918.3, "Current Amount": 125400, "Overall P/L": 13481.7, "% Change": 12.05, "Actions": "Details", "Weightage": 0.006850090225247803}, {"Scrip Name": "Shilpa Medicare Ltd.", "Quantity": 800, "Avg Rate": 447.62, "Closing Price": 341.8, "Invested Amount": 358092, "Current Amount": 273440, "Overall P/L": -84652, "% Change": -23.64, "Actions": "Details", "Weightage": 0.0149369112535228}, {"Scrip Name": "Sintex Plastics Technology Ltd", "Quantity": 5000, "Avg Rate": 2.69, "Closing Price": 1.06, "Invested Amount": 13450, "Current Amount": 5300, "Overall P/L": -8150, "% Change": -60.59, "Actions": "Details", "Weightage": 0.0002895173699666137}, {"Scrip Name": "Sky Gold And Diamonds Limited", "Quantity": 1890, "Avg Rate": 40.76, "Closing Price": 331.15, "Invested Amount": 77039.1, "Current Amount": 625873.5, "Overall P/L": 548834.4, "% Change": 712.41, "Actions": "Details", "Weightage": 0.034188915028641395}, {"Scrip Name": "Sovereign Gold Bonds 2020-21 S", "Quantity": 20, "Avg Rate": 4774.14, "Closing Price": 13119.77, "Invested Amount": 95482.9, "Current Amount": 262395.4, "Overall P/L": 166912.5, "% Change": 174.81, "Actions": "Details", "Weightage": 0.014333589830063696}, {"Scrip Name": "State Bank Of India", "Quantity": 750, "Avg Rate": 801.21, "Closing Price": 979.55, "Invested Amount": 600907.5, "Current Amount": 734662.5, "Overall P/L": 133755, "% Change": 22.26, "Actions": "Details", "Weightage": 0.04013161411567874}, {"Scrip Name": "Sun Pharma Advanced Research Company Limited", "Quantity": 4000, "Avg Rate": 186.82, "Closing Price": 134.51, "Invested Amount": 747300, "Current Amount": 538040, "Overall P/L": -209260, "% Change": -28, "Actions": "Details", "Weightage": 0.029390929384308834}, {"Scrip Name": "Sunflag Iron And Steel Company Limited", "Quantity": 384, "Avg Rate": 289.12, "Closing Price": 254.1, "Invested Amount": 111020.27, "Current Amount": 97574.4, "Overall P/L": -13445.87, "% Change": -12.11, "Actions": "Details", "Weightage": 0.005330091257371764}, {"Scrip Name": "Ttk Healthcare Ltd.", "Quantity": 300, "Avg Rate": 1362.81, "Closing Price": 1113.8, "Invested Amount": 408843.6, "Current Amount": 334140, "Overall P/L": -74703.6, "% Change": -18.27, "Actions": "Details", "Weightage": 0.018252704528423452}, {"Scrip Name": "United Spirits Ltd.", "Quantity": 2000, "Avg Rate": 623.35, "Closing Price": 1451.85, "Invested Amount": 1246694.45, "Current Amount": 2903700, "Overall P/L": 1657005.55, "% Change": 132.91, "Actions": "Details", "Weightage": 0.15861728059850116}, {"Scrip Name": "Uti Flexi Cap Fund-Regular Plan-Growth", "Quantity": 84, "Avg Rate": 235.4, "Closing Price": 328.03, "Invested Amount": 19774.01, "Current Amount": 27554.52, "Overall P/L": 7780.51, "% Change": 39.35, "Actions": "Details", "Weightage": 0.0015051909737910294}, {"Scrip Name": "Welspun Living Limited", "Quantity": 1468, "Avg Rate": 176.49, "Closing Price": 148.82, "Invested Amount": 259083.06, "Current Amount": 218467.76, "Overall P/L": -40615.3, "% Change": -15.68, "Actions": "Details", "Weightage": 0.011934002131641013}, {"Scrip Name": "Xpro India Ltd.", "Quantity": 600, "Avg Rate": 1212.53, "Closing Price": 1030.4, "Invested Amount": 727519.2, "Current Amount": 618240, "Overall P/L": -109279.2, "% Change": -15.02, "Actions": "Details", "Weightage": 0.033771928077011175}, {"Scrip Name": "Zen Technologies Ltd.", "Quantity": 350, "Avg Rate": 2077.47, "Closing Price": 1406.7, "Invested Amount": 727114.5, "Current Amount": 492345, "Overall P/L": -234769.5, "% Change": -32.29, "Actions": "Details", "Weightage": 0.02689479802192687}, {"Scrip Name": "Zydus Wellness Ltd.", "Quantity": 1000, "Avg Rate": 300.88, "Closing Price": 431.1, "Invested Amount": 300876, "Current Amount": 431100, "Overall P/L": 130224, "% Change": 43.28, "Actions": "Details", "Weightage": 0.023549233621246633}], "category_totals": {"SATELLITE": 6102960.16, "CORE": 11014242.15, "TAIL": 1189125.91}, "sector_totals": {"Breweries & Distilleries": 490950.0, "Healthcare": 612060.0, "Realty": 234000.0, "Power ": 576450.0, "Electrical Equipment\u00a0": 916937.5, "Pharma": 266520.0, "Diversified Commercial Services": 141980.0, "Public Sector Bank": 622895.0, "Specialty Chemicals": 369373.0, "Gems, Jewellery And Watches": 434525.0, "Private Sector Bank": 182330.0, "Industrial Products": 9404.91, "Financial Services": 621007.5, "Aerospace & Defense": 210259.0, "Diversified FMCG": 318555.0, "Food Products\u00a0": 333000.0, "Auto Ancillary": 566562.5, "Diversified Goods": 977300.0, "Offshore Support Solution Drilling": 596657.5, "Construction": 5402.58, "Gold": 81392.0, "Capital Goods": 3270.0, "Textiles\u00a0": 108940.5, "Metals & Mining\u00a0": 94950.0, "Refineries & Marketing": 9842.0, "Iron & Steel Products": 455550.0, "Mutual Fund": 440300.0, "Debt": 641896.15}, "risk": [["COCD", "Voucher Date", "Narration", "Amount", "", ""], ["", "2025-01-01 00:00:00", "Opening PF Value (Pulled from Global Of CY 24", "16331882.09", "-1", "-16331882.09"], ["", "2025-01-01 00:00:00", "ledger opening Balance ", "0", "-1", "0"], ["BSE_CASH", "2025-04-04 00:00:00", "PAYOUTG", "21527.1", "1", "21527.1"], ["BSE_CASH", "2025-04-04 00:00:00", "QPAYOUTA", "93027.41", "1", "93027.41"], ["NSE_CASH", "2025-04-16 00:00:00", "Received Amount Through Payment Gateway, Merchant TxnID : YESBN12025041604412541MICR :411532002 Bank AcNo:000899300000054", "60000", "-1", "-60000"], ["NSE_CASH", "2025-04-19 00:00:00", "Received Amount Through Payment Gateway, Merchant TxnID : YESBN12025041904515103MICR :411532002 Bank AcNo:000899300000054", "59000", "-1", "-59000"], ["NSE_CASH", "2025-04-23 00:00:00", "Received Amount Through Payment Gateway, Merchant TxnID : YESBN12025042304832621MICR :411532002 Bank AcNo:000899300000054", "301000", "-1", "-301000"], ["BSE_CASH", "2025-05-23 00:00:00", "* payout", "900000", "1", "900000"], ["NSE_CASH", "2025-05-27 00:00:00", "Received Amount Through Payment Gateway, Merchant TxnID : YESOB51472095550MICR :411532002 Bank AcNo:000899300000054", "400000", "-1", "-400000"], ["NSE_CASH", "2025-05-30 00:00:00", "Received Amount Through Payment Gateway, Merchant TxnID : YESOB51502079294MICR :411532002 Bank AcNo:000899300000054", "282000", "-1", "-282000"], ["NSE_CASH", "2025-06-09 00:00:00", "Received Amount Through Payment Gateway, Merchant TxnID : YESOB51601974428MICR :411532002 Bank AcNo:000899300000054", "22000", "-1", "-22000"], ["NSE_CASH", "2025-06-25 00:00:00", "Received Amount Through Payment Gateway, Merchant TxnID : YESOB51762071480MICR :411532002 Bank AcNo:000899300000054", "90000", "-1", "-90000"], ["BSE_CASH", "2025-06-27 00:00:00", "payout", "200000", "1", "200000"], ["BSE_CASH", "2025-08-01 00:00:00", "payout", "600000", "1", "600000"], ["NSE_CASH", "2025-08-06 00:00:00", "Received Amount Through Payment Gateway, Merchant TxnID : YESOB52182021093MICR :411532002 Bank AcNo:000899300000054", "65000", "-1", "-65000"], ["NSE_CASH", "2025-08-07 00:00:00", "Received Amount Through Payment Gateway, Merchant TxnID : YESOB52192052111MICR :411532002 Bank AcNo:000899300000054", "183000", "-1", "-183000"], ["BSE_CASH", "2025-08-12 00:00:00", "payout", "100000", "1", "100000"], ["NSE_CASH", "2025-08-14 00:00:00", "Received Amount Through Payment Gateway, Merchant TxnID : YESOB52262016112MICR :411532002 Bank AcNo:000899300000054", "652000", "-1", "-652000"], ["NSE_CASH", "2025-08-19 00:00:00", "Received Amount Through Payment Gateway, Merchant TxnID : YESIB52311956238MICR :411532002 Bank AcNo:000899300000054", "50000", "-1", "-50000"], ["NSE_CASH", "2025-08-29 00:00:00", "* PAYOUT", "672057.79", "1", "672057.79"], ["BSE_CASH", "2025-08-29 00:00:00", "*PAYOUT", "231186", "1", "231186"], ["NSE_CASH", "2025-09-09 00:00:00", "* payout", "10000", "1", "10000"], ["BSE_CASH", "2025-09-12 00:00:00", "payout", "400000", "1", "400000"], ["NSE_CASH", "2025-09-22 00:00:00", "Received Amount Through Payment Gateway, Merchant TxnID : YESOB52650022162MICR :411532002 Bank AcNo:000899300000054", "36000", "-1", "-36000"], ["NSE_CASH", "2025-09-26 00:00:00", "Received Amount Through Payment Gateway, Merchant TxnID : YESOB52690015621MICR :411532002 Bank AcNo:000899300000054", "80000", "-1", "-80000"], ["BSE_CASH", "2025-10-08 00:00:00", "PAYOUT", "375552.68", "1", "375552.68"], ["NSE_CASH", "2025-10-09 00:00:00", "Received Amount Through Payment Gateway, Merchant TxnID : YESOB52820034902MICR :411532002 Bank AcNo:000899300000054", "800000", "-1", "-800000"], ["NSE_FNO", "2025-10-14 00:00:00", "* PAYOUT", "3810.98", "1", "3810.98"], ["BSE_CASH", "2025-10-14 00:00:00", "* PAYOUT", "388496.14", "1", "388496.14"], ["NSE_CASH", "2025-10-20 00:00:00", "Received Amount Through Payment Gateway, Merchant TxnID : YESOB52930011614MICR :411532002 Bank AcNo:000899300000054", "329000", "-1", "-329000"], ["NSE_CASH", "2025-10-30 00:00:00", "Received Amount Through Payment Gateway, Merchant TxnID : YESOB53030009396MICR :411532002 Bank AcNo:000899300000054", "100000", "-1", "-100000"], ["BSE_CASH", "2025-10-31 00:00:00", "Received Amount Through Payment Gateway, Merchant TxnID : YESOB53040023747MICR :411532002 Bank AcNo:000899300000054", "90000", "-1", "-90000"], ["BSE_CASH", "2025-11-14 00:00:00", "payout", "900000", "1", "900000"], ["BSE_CASH", "2025-11-19 00:00:00", "Received Amount Through Payment Gateway, Merchant TxnID : YESOB53230029968MICR :411532002 Bank AcNo:000899300000054", "281000", "-1", "-281000"], ["BSE_CASH", "2025-11-20 00:00:00", "* PAYOUT THROUGH IBT", "4214.44", "1", "4214.44"], ["BSE_CASH", "2025-11-21 00:00:00", "payout", "500000", "1", "500000"], ["", "2025-12-01 00:00:00", "Closing Amount ", "18249760.21", "1", "18249760.21"], ["", "2025-12-01 00:00:00", "Ledger Closing", "11257.24", "1", "11257.24"]], "total_invested": 17030264.33, "total_current": 18306328.22};
+
+function fmt(n) {
+  if (n == null || n === '') return '';
+  const num = parseFloat(n);
+  if (isNaN(num)) return n;
+  return num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function pctClass(v) {
+  const n = parseFloat(v);
+  if (isNaN(n)) return '';
+  return n >= 0 ? 'positive' : 'negative';
+}
+
+// Diversification Table
+(function() {
+  const cols = ['Scrip Name','Quantity','Avg Rate','Closing Price','Invested Amount','Current Amount','Overall P/L','% Change'];
+  let html = '<table><thead><tr>';
+  cols.forEach(c => html += '<th>' + c + '</th>');
+  html += '</tr></thead><tbody>';
+  DATA.diversification.forEach(r => {
+    html += '<tr>';
+    cols.forEach(c => {
+      let v = r[c];
+      let cls = '';
+      if (c === 'Overall P/L' || c === '% Change') cls = pctClass(v);
+      if (c === 'Scrip Name') {
+        html += '<td>' + (v || '') + '</td>';
+      } else {
+        html += '<td class="' + cls + '">' + fmt(v) + '</td>';
+      }
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('div-table').innerHTML = html;
+})();
+
+// Totals
+(function() {
+  const pl = DATA.total_current - DATA.total_invested;
+  const pct = (pl / DATA.total_invested * 100).toFixed(2);
+  document.getElementById('totals').innerHTML =
+    '<div class="total-card"><div class="label">Total Invested</div><div class="value blue">\u20b9 ' + fmt(DATA.total_invested) + '</div></div>' +
+    '<div class="total-card"><div class="label">Total Current</div><div class="value green">\u20b9 ' + fmt(DATA.total_current) + '</div></div>' +
+    '<div class="total-card"><div class="label">Overall P/L</div><div class="value ' + (pl >= 0 ? 'green' : 'negative') + '">\u20b9 ' + fmt(pl) + ' (' + pct + '%)</div></div>';
+})();
+
+// Category Chart
+(function() {
+  const labels = Object.keys(DATA.category_totals);
+  const values = Object.values(DATA.category_totals);
+  let html = '<table><thead><tr><th>Category</th><th>Current Amount</th></tr></thead><tbody>';
+  labels.forEach((l, i) => {
+    html += '<tr><td>' + l + '</td><td>' + fmt(values[i]) + '</td></tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('cat-table').innerHTML = html;
+
+  new Chart(document.getElementById('catChart'), {
+    type: 'pie',
+    data: {
+      labels: labels,
+      datasets: [{ data: values, backgroundColor: ['#ff6384','#36a2eb','#ffce56','#4bc0c0','#9966ff'] }]
+    },
+    options: {
+      plugins: {
+        title: { display: true, text: 'Core / Satellite / Tail Distribution', color: '#fff', font: { size: 14 } },
+        legend: { labels: { color: '#ccc' } },
+        tooltip: { callbacks: { label: function(ctx) {
+          const total = ctx.dataset.data.reduce((a,b) => a+b, 0);
+          return ctx.label + ': \u20b9' + fmt(ctx.raw) + ' (' + (ctx.raw/total*100).toFixed(1) + '%)';
+        }}}
+      }
+    }
+  });
+})();
+
+// Sector Chart
+(function() {
+  const entries = Object.entries(DATA.sector_totals).sort((a,b) => b[1]-a[1]);
+  const labels = entries.map(e => e[0].trim());
+  const values = entries.map(e => e[1]);
+  let html = '<table><thead><tr><th>Sector</th><th>Current Amount</th></tr></thead><tbody>';
+  labels.forEach((l, i) => {
+    html += '<tr><td>' + l + '</td><td>' + fmt(values[i]) + '</td></tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('sector-table').innerHTML = html;
+
+  const colors = labels.map((_, i) => 'hsl(' + (i * 360 / labels.length) + ', 70%, 55%)');
+  new Chart(document.getElementById('sectorChart'), {
+    type: 'pie',
+    data: {
+      labels: labels,
+      datasets: [{ data: values, backgroundColor: colors }]
+    },
+    options: {
+      plugins: {
+        title: { display: true, text: 'Sector Distribution', color: '#fff', font: { size: 14 } },
+        legend: { display: false },
+        tooltip: { callbacks: { label: function(ctx) {
+          const total = ctx.dataset.data.reduce((a,b) => a+b, 0);
+          return ctx.label + ': \u20b9' + fmt(ctx.raw) + ' (' + (ctx.raw/total*100).toFixed(1) + '%)';
+        }}}
+      }
+    }
+  });
+})();
+
+// Risk Table
+(function() {
+  const headers = DATA.risk[0];
+  let html = '<table><thead><tr>';
+  headers.forEach(h => { if (h) html += '<th>' + h + '</th>'; });
+  html += '</tr></thead><tbody>';
+  DATA.risk.slice(1).forEach(row => {
+    html += '<tr>';
+    row.forEach((v, i) => {
+      if (headers[i]) html += '<td>' + (v || '') + '</td>';
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('risk-table').innerHTML = html;
+})();
+</script>
+
+</body>
+</html>
